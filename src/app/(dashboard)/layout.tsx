@@ -7,7 +7,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) redirect('/login')
     const { data: profile } = await supabase.from('profiles').select('clinic_id').eq('id', user.id).single()
-    if (!profile) redirect('/login')
+    if (!profile) redirect('/onboarding')
     const { data: clinic } = await supabase.from('clinics').select('name').eq('id', profile.clinic_id).single()
     return (
         <div className="flex h-screen overflow-hidden">

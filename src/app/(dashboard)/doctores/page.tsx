@@ -17,7 +17,9 @@ export default function DoctoresPage() {
 
     const fetchDoctores = useCallback(async () => {
         setLoading(true)
-        const { data, error } = await supabase.from('doctors').select('*').order('name')
+        const { data: clinicData } = await supabase.from('profiles').select('clinic_id').single()
+        if (!clinicData) { setLoading(false); return }
+        const { data, error } = await supabase.from('doctors').select('*').eq('clinic_id', clinicData.clinic_id).order('name')
         if (!error && data) setDoctores(data as Doctor[])
         setLoading(false)
     }, [supabase])

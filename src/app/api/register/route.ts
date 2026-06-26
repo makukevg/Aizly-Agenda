@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { createServerClient } from '@supabase/ssr'
 import { NextResponse } from 'next/server'
 
 export async function POST(request: Request) {
@@ -13,7 +13,21 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'La contraseña debe tener al menos 6 caracteres' }, { status: 400 })
     }
 
-    const supabase = await createClient()
+    let supabaseResponse = NextResponse.next({ request: {} as any })
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll() { return [] },
+          setAll(cookiesToSet) {
+            cookiesToSet.forEach(({ name, value, options }) =>
+              supabaseResponse.cookies.set(name, value, options),
+            )
+          },
+        },
+      },
+    )
 
     const { data: authData, error: authError } = await supabase.auth.signUp({
       email,
@@ -36,7 +50,7 @@ export async function POST(request: Request) {
       .single()
 
     if (clinicError || !clinic) {
-      return NextResponse.json({ error: 'Error al crear la clínica' }, { status: 500 })
+      return NextResponse.json({ error: 'Error al crear la clínica: ' + (clinicError?.message || '') }, { status: 500 })
     }
 
     const { error: profileError } = await supabase
@@ -45,11 +59,16 @@ export async function POST(request: Request) {
 
     if (profileError) {
       await supabase.from('clinics').delete().eq('id', clinic.id)
-      return NextResponse.json({ error: 'Error al crear el perfil' }, { status: 500 })
+      return NextResponse.json({ error: 'Error al crear el perfil: ' + profileError.message }, { status: 500 })
     }
 
-    return NextResponse.json({ success: true })
-  } catch {
-    return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 })
+    const jsonResponse = NextResponse.json({ success: true })
+    supabaseResponse.cookies.getAll().forEach(c => {
+      jsonResponse.cookies.set(c.name, c.value, c)
+    })
+
+    return jsonResponse
+  } catch (e) {
+    return NextResponse.json({ error: 'Error interno: ' + (e instanceof Error ? e.message : 'desconocido') }, { status: 500 })
   }
 }

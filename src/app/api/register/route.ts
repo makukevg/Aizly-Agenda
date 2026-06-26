@@ -8,12 +8,12 @@ export async function POST(request: Request) {
     if (!email || !password || !full_name) {
       return NextResponse.json({ error: 'Faltan campos requeridos' }, { status: 400 })
     }
-
     if (password.length < 6) {
       return NextResponse.json({ error: 'La contraseña debe tener al menos 6 caracteres' }, { status: 400 })
     }
 
-    let supabaseResponse = NextResponse.next({ request: {} as any })
+    const response = NextResponse.json({ success: true })
+
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -22,7 +22,7 @@ export async function POST(request: Request) {
           getAll() { return [] },
           setAll(cookiesToSet) {
             cookiesToSet.forEach(({ name, value, options }) =>
-              supabaseResponse.cookies.set(name, value, options),
+              response.cookies.set(name, value, options),
             )
           },
         },
@@ -38,7 +38,6 @@ export async function POST(request: Request) {
     if (authError) {
       return NextResponse.json({ error: authError.message }, { status: 400 })
     }
-
     if (!authData.user) {
       return NextResponse.json({ error: 'Error al crear usuario' }, { status: 500 })
     }
@@ -62,12 +61,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Error al crear el perfil: ' + profileError.message }, { status: 500 })
     }
 
-    const jsonResponse = NextResponse.json({ success: true })
-    supabaseResponse.cookies.getAll().forEach(c => {
-      jsonResponse.cookies.set(c.name, c.value, c)
-    })
-
-    return jsonResponse
+    return response
   } catch (e) {
     return NextResponse.json({ error: 'Error interno: ' + (e instanceof Error ? e.message : 'desconocido') }, { status: 500 })
   }

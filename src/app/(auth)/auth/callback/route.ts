@@ -23,15 +23,19 @@ export async function GET(request: NextRequest) {
         },
       },
     )
+
     const { error } = await supabase.auth.exchangeCodeForSession(code)
     if (!error) {
       const { data: { user } } = await supabase.auth.getUser()
       if (user) {
         const { data: profile } = await supabase.from('profiles').select('id').eq('id', user.id).single()
-        if (profile) {
-          return NextResponse.redirect(new URL('/agenda', request.url))
-        }
-        return NextResponse.redirect(new URL('/onboarding', request.url))
+        const dest = profile ? '/agenda' : '/onboarding'
+        const url = new URL(dest, request.url)
+        const redirectResponse = NextResponse.redirect(url)
+        supabaseResponse.cookies.getAll().forEach(c => {
+          redirectResponse.cookies.set(c.name, c.value, c)
+        })
+        return redirectResponse
       }
     }
   }

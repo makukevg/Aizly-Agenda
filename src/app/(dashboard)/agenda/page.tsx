@@ -1,3 +1,4 @@
+import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { Agenda } from '@/components/agenda/agenda'
 import type { Appointment, Doctor } from '@/types'
@@ -5,9 +6,9 @@ import type { Appointment, Doctor } from '@/types'
 export default async function AgendaPage() {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return null
+    if (!user) redirect('/login')
     const { data: profile } = await supabase.from('profiles').select('clinic_id').eq('id', user.id).single()
-    if (!profile) return null
+    if (!profile) redirect('/onboarding')
     const { data: doctors } = await supabase.from('doctors').select('*').eq('clinic_id', profile.clinic_id).eq('active', true).order('name')
     const today = new Date()
     const weekStart = new Date(today)

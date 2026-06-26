@@ -86,11 +86,14 @@ export default function PacientesPage() {
 
     const fetchData = useCallback(async () => {
         setLoading(true)
-        const { data: profile } = await supabase.from('profiles').select('clinic_id').single()
-        if (profile?.clinic_id) setClinicId(profile.clinic_id)
-        const { data: docs } = await supabase.from('doctors').select('*').eq('active', true).order('name')
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) { setLoading(false); return }
+        const { data: profile } = await supabase.from('profiles').select('clinic_id').eq('id', user.id).single()
+        if (!profile?.clinic_id) { setLoading(false); return }
+        setClinicId(profile.clinic_id)
+        const { data: docs } = await supabase.from('doctors').select('*').eq('clinic_id', profile.clinic_id).eq('active', true).order('name')
         if (docs) setDoctors(docs as Doctor[])
-        const { data: apps } = await supabase.from('appointments').select('*').order('date', { ascending: false }).order('time_start', { ascending: false })
+        const { data: apps } = await supabase.from('appointments').select('*').eq('clinic_id', profile.clinic_id).order('date', { ascending: false }).order('time_start', { ascending: false })
         if (apps) setAppointments(apps as Appointment[])
         setLoading(false)
     }, [supabase])

@@ -32,6 +32,7 @@ export interface Appointment {
     reason: string | null
     notes: string | null
     is_reactivated: boolean
+    reminder_sent?: boolean
     status: 'scheduled' | 'completado' | 'ausente' | 'cancelado'
     created_at: string
 }

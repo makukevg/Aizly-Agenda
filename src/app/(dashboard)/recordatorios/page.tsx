@@ -67,9 +67,13 @@ export default function RecordatoriosPage() {
     const fetchData = useCallback(async () => {
         setLoading(true)
 
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) { setLoading(false); return }
+
         const { data: profile } = await supabase
             .from('profiles')
             .select('clinic_id')
+            .eq('id', user.id)
             .single()
 
         if (!profile?.clinic_id) { setLoading(false); return }
@@ -98,7 +102,6 @@ export default function RecordatoriosPage() {
             .eq('clinic_id', profile.clinic_id)
             .in('date', [getToday(), getTomorrow()])
             .neq('status', 'cancelado')
-            .neq('status', 'cancelled')
             .order('time_start', { ascending: true })
 
         if (apps) {

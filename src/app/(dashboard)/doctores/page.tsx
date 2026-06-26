@@ -17,7 +17,9 @@ export default function DoctoresPage() {
 
     const fetchDoctores = useCallback(async () => {
         setLoading(true)
-        const { data: clinicData } = await supabase.from('profiles').select('clinic_id').single()
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) { setLoading(false); return }
+        const { data: clinicData } = await supabase.from('profiles').select('clinic_id').eq('id', user.id).single()
         if (!clinicData) { setLoading(false); return }
         const { data, error } = await supabase.from('doctors').select('*').eq('clinic_id', clinicData.clinic_id).order('name')
         if (!error && data) setDoctores(data as Doctor[])
@@ -48,7 +50,9 @@ export default function DoctoresPage() {
             if (error) { toast('Error al actualizar'); return }
             toast('Doctor actualizado ✓')
         } else {
-            const { data: clinicData } = await supabase.from('profiles').select('clinic_id').single()
+            const { data: { user } } = await supabase.auth.getUser()
+            if (!user) { toast('Error de sesión'); return }
+            const { data: clinicData } = await supabase.from('profiles').select('clinic_id').eq('id', user.id).single()
             if (!clinicData) { toast('Error'); return }
             const { error } = await supabase.from('doctors').insert({ clinic_id: clinicData.clinic_id, name: form.name.trim(), specialty: form.specialty.trim() })
             if (error) { toast('Error al crear'); return }

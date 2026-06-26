@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useContext, useState, useCallback, type ReactNode } from 'react'
+import { createContext, useContext, useState, useCallback, useRef, type ReactNode } from 'react'
 
 type ToastFn = (msg: string) => void
 const ToastContext = createContext<ToastFn>(() => { })
@@ -9,13 +9,13 @@ export function useToast() { return useContext(ToastContext) }
 export function ToastProvider({ children }: { children: ReactNode }) {
     const [visible, setVisible] = useState(false)
     const [msg, setMsg] = useState('')
-    let timer: ReturnType<typeof setTimeout>
+    const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
     const show: ToastFn = useCallback((m) => {
-        clearTimeout(timer)
+        if (timerRef.current) clearTimeout(timerRef.current)
         setMsg(m)
         setVisible(true)
-        timer = setTimeout(() => setVisible(false), 2500)
+        timerRef.current = setTimeout(() => setVisible(false), 2500)
     }, [])
 
     return (

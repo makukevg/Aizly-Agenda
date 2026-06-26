@@ -224,7 +224,7 @@ export function Agenda({ initialAppointments, doctors, clinicId }: AgendaProps) 
     }
 
     async function doCancel(id: string) {
-        const res = await supabase.from('appointments').update({ status: 'cancelled' }).eq('id', id)
+        const res = await supabase.from('appointments').update({ status: 'cancelado' }).eq('id', id)
         if (res.error) { toast('Error al cancelar'); return }
         closePanel(); fetchData(); toast('Turno cancelado')
     }
